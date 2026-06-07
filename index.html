@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crypto Donations</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <style>
     body {
@@ -203,24 +202,22 @@
     });
 
     function openModal(coin) {
-      currentAddress = coin.address;
+  currentAddress = coin.address;
 
-      document.getElementById("modalTitle").textContent = `${coin.name} Donation`;
-      document.getElementById("addressText").textContent = coin.address;
-      document.getElementById("warningText").textContent = coin.warning;
+  document.getElementById("modalTitle").textContent = `${coin.name} Donation`;
+  document.getElementById("addressText").textContent = coin.address;
+  document.getElementById("warningText").textContent = coin.warning;
 
-      const qrBox = document.getElementById("qr");
-      qrBox.innerHTML = "";
+  const qrBox = document.getElementById("qr");
+  qrBox.innerHTML = "";
 
-      QRCode.toCanvas(coin.address, {
-        width: 220,
-        margin: 1
-      }, function (err, canvas) {
-        if (!err) qrBox.appendChild(canvas);
-      });
+  const img = document.createElement("img");
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(coin.address)}`;
+  img.alt = "Donation QR Code";
+  qrBox.appendChild(img);
 
-      document.getElementById("modal").style.display = "flex";
-    }
+  document.getElementById("modal").style.display = "flex";
+}
 
     function closeModal() {
       document.getElementById("modal").style.display = "none";
