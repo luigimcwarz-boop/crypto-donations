@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crypto Donations</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #17223a, #070a12);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 36px;
+    }
+
+    .sub {
+      color: #b8c4dd;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .coin {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      padding: 22px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .coin:hover {
+      transform: translateY(-3px);
+      background: rgba(255, 255, 255, 0.13);
+      border-color: #48d7ff;
+    }
+
+    .coin-name {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .network {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #b8c4dd;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: #101827;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 22px;
+      padding: 24px;
+      max-width: 430px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(72, 215, 255, 0.18);
+    }
+
+    #qr {
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      margin: 18px auto;
+      width: fit-content;
+    }
+
+    .address {
+      word-break: break-all;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 6px;
+    }
+
+    .copy {
+      background: #48d7ff;
+      color: #06101a;
+    }
+
+    .close {
+      background: #2a3345;
+      color: white;
+    }
+
+    .warning {
+      color: #ffd36b;
+      font-size: 13px;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Support the Stream</h1>
+    <p class="sub">Choose a coin to reveal the donation address and QR code.</p>
+
+    <div class="grid" id="coinGrid"></div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <h2 id="modalTitle"></h2>
+      <div id="qr"></div>
+      <div class="address" id="addressText"></div>
+
+      <p class="warning" id="warningText"></p>
+
+      <button class="copy" onclick="copyAddress()">Copy Address</button>
+      <button class="close" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const donations = [
+      {
+        name: "Bitcoin",
+        short: "BTC",
+        network: "Bitcoin Network",
+        address: "bc1qxu63lv8gwahf3vutaz6m0yghcpe34lq7cxz6mk",
+        warning: "Send BTC only on the Bitcoin network."
+      },
+      {
+        name: "Ethereum",
+        short: "ETH",
+        network: "Ethereum / ERC-20",
+        address: "0x7a2B26b5485562b6aFfEB835814EAcEf4057aC4D",
+        warning: "Send ETH or ERC-20 tokens only to this address."
+      },
+      {
+        name: "Solana",
+        short: "SOL",
+        network: "Solana Network",
+        address: "pxPssgoJDKuD2xK9Xp9ZgXGtCb9KX8yGpGx68Q9hUnT",
+        warning: "Send SOL only on the Solana network."
+      },
+      {
+        name: "Litecoin",
+        short: "LTC",
+        network: "Litecoin Network",
+        address: "LfQ3nU93PuvRV8eQGL8XTQ5WhhTfGxYuVt",
+        warning: "Send LTC only on the Litecoin network."
+      }
+    ];
+
+    let currentAddress = "";
+
+    const grid = document.getElementById("coinGrid");
+
+    donations.forEach((coin) => {
+      const div = document.createElement("div");
+      div.className = "coin";
+      div.innerHTML = `
+        <div class="coin-name">${coin.short}</div>
+        <div>${coin.name}</div>
+        <div class="network">${coin.network}</div>
+      `;
+      div.onclick = () => openModal(coin);
+      grid.appendChild(div);
+    });
+
+    function openModal(coin) {
+      currentAddress = coin.address;
+
+      document.getElementById("modalTitle").textContent = `${coin.name} Donation`;
+      document.getElementById("addressText").textContent = coin.address;
+      document.getElementById("warningText").textContent = coin.warning;
+
+      const qrBox = document.getElementById("qr");
+      qrBox.innerHTML = "";
+
+      QRCode.toCanvas(coin.address, {
+        width: 220,
+        margin: 1
+      }, function (err, canvas) {
+        if (!err) qrBox.appendChild(canvas);
+      });
+
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    function copyAddress() {
+      navigator.clipboard.writeText(currentAddress);
+      alert("Address copied.");
+    }
+  </script>
+</body>
+</html>
